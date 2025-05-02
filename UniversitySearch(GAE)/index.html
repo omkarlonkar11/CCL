@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+    
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+    
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+    
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+    
+        #searchInput {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+    
+        #searchInput:focus {
+            border-color: #1a73e8;
+        }
+    
+        button {
+            padding: 12px 24px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    
+        button:hover {
+            background-color: #1557b0;
+        }
+    
+        .results {
+            display: grid;
+            gap: 15px;
+        }
+    
+        .university-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    
+        .university-name {
+            margin: 0;
+            font-size: 1.2em;
+        }
+    
+        .university-details {
+            margin: 10px 0;
+            color: #5f6368;
+        }
+    
+        .website-link {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+    
+        .website-link:hover {
+            text-decoration: underline;
+        }
+    
+        .error {
+            color: #d93025;
+            background-color: #fce8e6;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+    
+        .loading {
+            text-align: center;
+            color: #5f6368;
+            display: none;
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="container">
+        <h1>University Search</h1>
+        
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Enter university name..."
+                minlength="2"
+                required
+            >
+            <button onclick="searchUniversities()">Search</button>
+        </div>
+
+        <div id="errorMessage" class="error"></div>
+        <div id="loading" class="loading">Searching universities...</div>
+        
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        async function searchUniversities() {
+            const input = document.getElementById('searchInput');
+            const errorMessage = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            results.innerHTML = '';
+            errorMessage.style.display = 'none';
+
+            const searchTerm = input.value.trim();
+            if (searchTerm.length < 2) {
+                showError('Please enter at least 2 characters');
+                return;
+            }
+
+            try {
+                loading.style.display = 'block';
+
+                const response = await fetch(
+                    `/search?name=${encodeURIComponent(searchTerm)}`
+                );
+
+                if (!response.ok) throw new Error('Failed to fetch data');
+                
+                const universities = await response.json();
+
+                if (universities.length === 0) {
+                    results.innerHTML = '<div class="university-card">No universities found</div>';
+                    return;
+                }
+
+                results.innerHTML = universities.map(university => `
+                    <div class="university-card">
+                        <h2 class="university-name">${university.name}</h2>
+                        <div class="university-details">
+                            ${university['state-province'] ? `<p>State/Province: ${university['state-province']}</p>` : ''}
+                            <p>Country: ${university.country}</p>
+                            ${university.domains.length > 0 ? `
+                                <p>Website: 
+                                    <a class="website-link" href="http://${university.domains[0]}" target="_blank">
+                                        ${university.domains[0]}
+                                    </a>
+                                </p>` : ''
+                            }
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                showError('An error occurred while fetching data. Please try again.');
+                console.error('Error:', error);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchUniversities();
+            }
+        });
+    </script>
+</body>
+</html>

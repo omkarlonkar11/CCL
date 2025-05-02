@@ -1,0 +1,12 @@
+runtime: python39
+
+entrypoint: gunicorn -b :$PORT main:app
+
+automatic_scaling:
+  # only these two are allowed in std env:
+  min_instances: 1
+  max_instances: 3
+
+handlers:
+  - url: /.*
+    script: auto
